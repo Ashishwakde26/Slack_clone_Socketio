@@ -29,5 +29,36 @@ io.on('connection', (socket) => {
 Namespaces.forEach(namespace => {
     io.of(namespace.endpoint).on('connection', (socket) => {
         console.log(`${socket.id} has connected to ${namespace.endpoint}`)
+
+        socket.on('joinRoom', async (roomTitle, ackCallBack) => {
+
+            const rooms = socket.rooms;
+         //   console.log(rooms);
+
+            let i = 0;
+            rooms.forEach(room => {
+                if(i !== 0) {
+                    socket.leave(room)
+                }
+                i++;
+            })
+
+            socket.join(roomTitle);
+
+            const sockets = await io.of(namespace.endpoint).in(roomTitle).fetchSockets();
+            // console.log(sockets);
+            const socketsCount = sockets.length
+            ackCallBack({
+                numUsers: socketsCount
+            })
+        })
+
+        socket.on('newMessageFromRoom', messageobj => {
+            console.log(messageobj)
+
+            const rooms = socket.rooms;
+            const currentRoom = [...rooms][1];
+            io.of(namespace.endpoint).in(currentRoom).emit('messageToRoom', messageobj)
+        })
     })
 })

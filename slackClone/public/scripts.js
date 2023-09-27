@@ -15,7 +15,23 @@ const socket = io('http://localhost:9000')
 let nameSpaceSockets = [];
 let listeners = {
     nsChange: [],
+    messageToRoom: []
 }
+
+let selectedNsId = 0;
+
+
+document.querySelector('#message-form').addEventListener('submit', e => {
+    e.preventDefault();
+    const newMessage = document.querySelector('#user-message').value;
+    console.log(newMessage, selectedNsId);
+    nameSpaceSockets[selectedNsId].emit('newMessageFromRoom', {
+        newMessage,
+        date: Date.now(),
+        avatar: 'http://via.placeholder.com/30',
+        username: UserName
+    })
+})
 
 
 const addListeners = (nsId) => {
@@ -24,8 +40,14 @@ const addListeners = (nsId) => {
             console.log("Namespace Changed!")
             console.log(data)
         })
-
         listeners.nsChange[nsId] = true;
+    }
+
+    if(!listeners.messageToRoom[nsId]) {
+        nameSpaceSockets[nsId].on('messageToRoom', messageObj => {
+            console.log(messageObj)
+        })
+        listeners.messageToRoom[nsId] = true;
     }
 }
 
